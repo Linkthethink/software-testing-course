@@ -244,16 +244,18 @@ app.post('/api/checkout', (req, res) => {
     return res.status(400).json({ error: 'Cart is empty' });
   }
   
-  const { shipping } = req.body;
-  if (!shipping || !shipping.address || !shipping.city || !shipping.zip) {
+  const { shipping: shippingAddress } = req.body;
+  if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.zip) {
     return res.status(400).json({ error: 'Shipping information required' });
   }
   
-  // Calculate total
-  const total = cart.reduce((sum, item) => {
+  // Calculate subtotal and total with conditional shipping fee
+  const subtotal = cart.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId);
     return sum + (product.price * item.quantity);
   }, 0);
+  const shippingFee = subtotal < 100 ? 20 : 0;
+  const total = subtotal + shippingFee;
   
   // Update stock (note: in real app this should be transactional)
   cart.forEach(item => {
@@ -264,8 +266,10 @@ app.post('/api/checkout', (req, res) => {
   const order = {
     id: Date.now(),
     items: [...cart],
+    subtotal: subtotal.toFixed(2),
+    shippingFee: shippingFee.toFixed(2),
     total: total.toFixed(2),
-    shipping,
+    shipping: shippingAddress,
     date: new Date().toISOString()
   };
   

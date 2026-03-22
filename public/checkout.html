@@ -108,7 +108,7 @@
           </div>
           <div class="summary-row">
             <span>Shipping</span>
-            <span>FREE</span>
+            <span id="shipping">FREE</span>
           </div>
           <div class="summary-row">
             <span>Tax</span>
@@ -170,10 +170,12 @@
         }).join('');
         
         const subtotal = parseFloat(data.total);
+        const shipping = subtotal < 100 ? 20 : 0;
         const tax = subtotal * 0.08;
-        const total = subtotal + tax;
+        const total = subtotal + shipping + tax;
         
         document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
         document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
         document.getElementById('total').textContent = `$${total.toFixed(2)}`;
       } catch (error) {
