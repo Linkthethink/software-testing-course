@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_ROOT = __dirname;
+const FRONTEND_ROOT = path.join(__dirname, 'public');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -302,7 +302,7 @@ app.get('/register', (req, res) => {
 
 // Fallback for non-API routes (SPA-friendly)
 app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
-  res.sendFile(path.join(FRONTEND_ROOT, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
