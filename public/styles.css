@@ -513,6 +513,22 @@ header {
   margin-top: 1rem;
 }
 
+.coupon-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.coupon-input-group input {
+  flex: 1;
+}
+
+.coupon-input-group .btn {
+  margin-top: 0;
+  width: auto;
+  white-space: nowrap;
+}
+
 /* Checkout Page */
 .checkout-page {
   max-width: 1200px;

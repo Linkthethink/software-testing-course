@@ -244,10 +244,13 @@ app.post('/api/checkout', (req, res) => {
     return res.status(400).json({ error: 'Cart is empty' });
   }
   
-  const { shipping: shippingAddress } = req.body;
+  const { shipping: shippingAddress, couponCode } = req.body;
   if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.zip) {
     return res.status(400).json({ error: 'Shipping information required' });
   }
+
+  const normalizedCouponCode = typeof couponCode === 'string' ? couponCode.trim().toUpperCase() : '';
+  const discount = normalizedCouponCode === '15OFF' ? 15 : 0;
   
   // Calculate subtotal and total with conditional shipping fee
   const subtotal = cart.reduce((sum, item) => {
@@ -255,7 +258,7 @@ app.post('/api/checkout', (req, res) => {
     return sum + (product.price * item.quantity);
   }, 0);
   const shippingFee = subtotal < 100 ? 20 : 0;
-  const total = subtotal + shippingFee;
+  const total = Math.max(0, subtotal + shippingFee - discount);
   
   // Update stock (note: in real app this should be transactional)
   cart.forEach(item => {
@@ -268,6 +271,8 @@ app.post('/api/checkout', (req, res) => {
     items: [...cart],
     subtotal: subtotal.toFixed(2),
     shippingFee: shippingFee.toFixed(2),
+    discount: discount.toFixed(2),
+    couponCode: discount > 0 ? normalizedCouponCode : null,
     total: total.toFixed(2),
     shipping: shippingAddress,
     date: new Date().toISOString()

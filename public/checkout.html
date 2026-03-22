@@ -111,6 +111,10 @@
             <span id="shipping">FREE</span>
           </div>
           <div class="summary-row">
+            <span>Discount</span>
+            <span id="discount">-$0.00</span>
+          </div>
+          <div class="summary-row">
             <span>Tax</span>
             <span id="tax">$0.00</span>
           </div>
@@ -146,6 +150,17 @@
         .replace(/'/g, '&#39;');
     }
 
+    const VALID_COUPON_CODE = '15OFF';
+    const COUPON_DISCOUNT_AMOUNT = 15;
+
+    function getAppliedCouponCode() {
+      return (localStorage.getItem('couponCode') || '').trim().toUpperCase();
+    }
+
+    function getCouponDiscount(couponCode) {
+      return couponCode === VALID_COUPON_CODE ? COUPON_DISCOUNT_AMOUNT : 0;
+    }
+
     async function loadOrderSummary() {
       try {
         const response = await fetch('/api/cart');
@@ -171,11 +186,13 @@
         
         const subtotal = parseFloat(data.total);
         const shipping = subtotal < 100 ? 20 : 0;
+        const discount = Math.min(getCouponDiscount(getAppliedCouponCode()), subtotal + shipping);
         const tax = subtotal * 0.08;
-        const total = subtotal + shipping + tax;
+        const total = Math.max(0, subtotal + shipping + tax - discount);
         
         document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
         document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+        document.getElementById('discount').textContent = `-$${discount.toFixed(2)}`;
         document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
         document.getElementById('total').textContent = `$${total.toFixed(2)}`;
       } catch (error) {
@@ -215,10 +232,11 @@
       };
       
       try {
+        const couponCode = getAppliedCouponCode();
         const response = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shipping })
+          body: JSON.stringify({ shipping, couponCode })
         });
         
         const data = await response.json();

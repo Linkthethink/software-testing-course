@@ -40,13 +40,20 @@
           <span>Shipping</span>
           <span id="shipping">FREE</span>
         </div>
+        <div class="summary-row">
+          <span>Discount</span>
+          <span id="discount">-$0.00</span>
+        </div>
         <div class="summary-row total">
           <span>Total</span>
           <span id="total">$0.00</span>
         </div>
         <div class="form-group">
           <label for="couponCode">Coupon Code</label>
-          <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code">
+          <div class="coupon-input-group">
+            <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code">
+            <button type="button" class="btn btn-outline" id="applyCouponBtn">Enter</button>
+          </div>
         </div>
         <a href="/checkout.html" class="btn btn-primary btn-full" id="checkoutBtn">Proceed to Checkout</a>
         <button class="btn btn-outline btn-full" id="clearCartBtn">Clear Cart</button>
@@ -65,6 +72,39 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    const VALID_COUPON_CODE = '15OFF';
+    const COUPON_DISCOUNT_AMOUNT = 15;
+
+    function getAppliedCouponCode() {
+      return (localStorage.getItem('couponCode') || '').trim().toUpperCase();
+    }
+
+    function getCouponDiscount(couponCode) {
+      return couponCode === VALID_COUPON_CODE ? COUPON_DISCOUNT_AMOUNT : 0;
+    }
+
+    function applyCouponCode() {
+      const couponInput = document.getElementById('couponCode');
+      const couponCode = couponInput.value.trim().toUpperCase();
+
+      if (!couponCode) {
+        localStorage.removeItem('couponCode');
+        showToast('Coupon cleared');
+        loadCart();
+        return;
+      }
+
+      if (couponCode === VALID_COUPON_CODE) {
+        localStorage.setItem('couponCode', couponCode);
+        showToast('Coupon applied: $15.00 off');
+      } else {
+        localStorage.removeItem('couponCode');
+        showToast('Invalid coupon code', 'error');
+      }
+
+      loadCart();
     }
 
     async function loadCart() {
@@ -115,10 +155,18 @@
 
         const subtotal = Number.parseFloat(data.total);
         const shipping = subtotal < 100 ? 20 : 0;
-        const total = subtotal + shipping;
+        const discount = Math.min(getCouponDiscount(getAppliedCouponCode()), subtotal + shipping);
+        const total = Math.max(0, subtotal + shipping - discount);
+
+        const couponInput = document.getElementById('couponCode');
+        const savedCoupon = getAppliedCouponCode();
+        if (savedCoupon) {
+          couponInput.value = savedCoupon;
+        }
 
         document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
         document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+        document.getElementById('discount').textContent = `-$${discount.toFixed(2)}`;
         document.getElementById('total').textContent = `$${total.toFixed(2)}`;
         updateCartCount();
       } catch (error) {
@@ -157,10 +205,20 @@
     document.getElementById('clearCartBtn').addEventListener('click', async () => {
       try {
         await fetch('/api/cart', { method: 'DELETE' });
+        localStorage.removeItem('couponCode');
+        document.getElementById('couponCode').value = '';
         showToast('Cart cleared');
         loadCart();
       } catch (error) {
         console.error('Error clearing cart:', error);
+      }
+    });
+
+    document.getElementById('applyCouponBtn').addEventListener('click', applyCouponCode);
+    document.getElementById('couponCode').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyCouponCode();
       }
     });
 
