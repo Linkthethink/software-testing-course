@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FRONTEND_ROOT = __dirname;
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -21,7 +22,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(FRONTEND_ROOT, {
+  index: false
+}));
 
 // In-memory data store
 const products = [
@@ -274,6 +277,32 @@ app.post('/api/checkout', (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Frontend routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'index.html'));
+});
+
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'cart.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'checkout.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'register.html'));
+});
+
+// Fallback for non-API routes (SPA-friendly)
+app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'index.html'));
 });
 
 app.listen(PORT, () => {
