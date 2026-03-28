@@ -20,7 +20,9 @@ function escapeHtml(value) {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-  loadProducts();
+  if (document.getElementById('productGrid')) {
+    loadProducts();
+  }
   updateCartCount();
   updateAuthArea();
   setupEventListeners();
@@ -78,17 +80,21 @@ function renderProducts() {
   grid.innerHTML = products.map(product => {
     const safeName = escapeHtml(product.name);
     const safeCategory = escapeHtml(product.category);
+    const safeDescription = escapeHtml(product.description || '');
     const safeImage = encodeURIComponent(String(product.image));
     const stockText = product.stock < 5 ? `Only ${product.stock} left!` : `${product.stock} in stock`;
 
     return `
     <div class="product-card" data-product-id="${product.id}">
       <div class="product-image">
-        <img src="images/${safeImage}" alt="${safeName}" onerror="this.src='images/placeholder.svg'">
+        <a href="/product.html?id=${product.id}" class="product-link" aria-label="View ${safeName}">
+          <img src="images/${safeImage}" alt="${safeName}" onerror="this.src='images/placeholder.svg'">
+        </a>
       </div>
       <div class="product-info">
-        <h3>${safeName}</h3>
+        <h3><a href="/product.html?id=${product.id}" class="product-link">${safeName}</a></h3>
         <p class="product-category">${safeCategory}</p>
+        ${safeDescription ? `<p class="product-description">${safeDescription}</p>` : ''}
         <p class="product-price">$${product.price.toFixed(2)}</p>
         <p class="product-stock ${product.stock < 5 ? 'low' : ''}">
           ${escapeHtml(stockText)}

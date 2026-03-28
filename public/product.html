@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - TechMart</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="/" class="logo">🛒 TechMart</a>
+      <div class="nav-links">
+        <a href="/cart.html" class="cart-link">🛒 Cart (<span id="cartCount">0</span>)</a>
+        <div id="authArea">
+          <a href="/login.html" class="btn btn-outline">Login</a>
+          <a href="/register.html" class="btn btn-primary">Sign Up</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="product-page">
+    <div id="productNotFound" class="empty-cart hidden">
+      <p>Product not found.</p>
+    </div>
+
+    <section id="productDetail" class="product-detail hidden">
+      <div class="product-detail-image">
+        <img id="productImage" src="images/placeholder.svg" alt="Product image">
+      </div>
+      <div class="product-detail-info">
+        <p id="productCategory" class="product-category"></p>
+        <h1 id="productName"></h1>
+        <p id="productDescription" class="product-description"></p>
+        <p id="productPrice" class="product-price"></p>
+        <p id="productStock" class="product-stock"></p>
+
+        <div class="quantity-control" id="quantityControl">
+          <label for="quantityInput">Quantity</label>
+          <div class="quantity-input-wrap">
+            <button type="button" class="qty-btn" id="decreaseQtyBtn" aria-label="Decrease quantity">-</button>
+            <input id="quantityInput" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">
+            <button type="button" class="qty-btn" id="increaseQtyBtn" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        <div class="product-detail-actions">
+          <button id="addToCartBtn" class="btn btn-primary btn-large">Add to Cart</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="productExtra" class="product-extra hidden">
+      <div class="detail-sections">
+        <article class="detail-card">
+          <h2>Functions</h2>
+          <ul id="productFunctions" class="detail-list"></ul>
+        </article>
+
+        <article class="detail-card">
+          <h2>Product Dimensions</h2>
+          <div class="detail-rows">
+            <div class="detail-row"><span>Width</span><span id="dimensionWidth"></span></div>
+            <div class="detail-row"><span>Height</span><span id="dimensionHeight"></span></div>
+            <div class="detail-row"><span>Depth</span><span id="dimensionDepth"></span></div>
+            <div class="detail-row"><span>Weight</span><span id="dimensionWeight"></span></div>
+          </div>
+        </article>
+
+        <article class="detail-card">
+          <h2>Supplier</h2>
+          <div class="detail-rows">
+            <div class="detail-row"><span>Supplier</span><span id="supplierName"></span></div>
+            <div class="detail-row"><span>Model</span><span id="supplierModel"></span></div>
+            <div class="detail-row"><span>Warranty</span><span id="supplierWarranty"></span></div>
+            <div class="detail-row"><span>Origin</span><span id="supplierOrigin"></span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="relatedSection" class="related-section hidden">
+      <h2>See Also</h2>
+      <div id="relatedGrid" class="related-grid"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentProduct = null;
+
+    const supplementalDetailsByProductId = {
+      1: {
+        functions: ['Bluetooth wireless connection', 'Noise-reducing audio profile', 'Foldable travel design'],
+        dimensions: { width: '17.5 cm', height: '20.1 cm', depth: '8.2 cm', weight: '0.28 kg' },
+        supplier: { name: 'AudioCore Ltd.', model: 'AC-HDP100', warranty: '1 year', origin: 'Malaysia' }
+      },
+      2: {
+        functions: ['Mechanical key switches', 'N-key rollover support', 'Adjustable typing angle'],
+        dimensions: { width: '44.0 cm', height: '4.2 cm', depth: '14.1 cm', weight: '0.95 kg' },
+        supplier: { name: 'TypeCraft Inc.', model: 'TC-MK87', warranty: '2 years', origin: 'Taiwan' }
+      },
+      3: {
+        functions: ['7-in-1 port expansion', 'Pass-through charging', '4K external display support'],
+        dimensions: { width: '10.9 cm', height: '1.6 cm', depth: '4.6 cm', weight: '0.09 kg' },
+        supplier: { name: 'ConnectWorks', model: 'CW-HUB7', warranty: '1 year', origin: 'Vietnam' }
+      },
+      4: {
+        functions: ['Height adjustable platform', 'Cable routing opening', 'Wide base for stability'],
+        dimensions: { width: '37.2 cm', height: '12.0 cm', depth: '23.6 cm', weight: '1.4 kg' },
+        supplier: { name: 'DeskEase Supplies', model: 'DE-MS200', warranty: '1 year', origin: 'China' }
+      },
+      5: {
+        functions: ['1080p capture mode', 'Auto light correction', 'Integrated privacy shutter'],
+        dimensions: { width: '9.4 cm', height: '5.5 cm', depth: '5.1 cm', weight: '0.12 kg' },
+        supplier: { name: 'VisionLink Tech', model: 'VL-WC1080', warranty: '2 years', origin: 'Thailand' }
+      },
+      6: {
+        functions: ['Water-resistant surface', 'Anti-slip rubber base', 'Low-friction mouse glide'],
+        dimensions: { width: '90.0 cm', height: '0.4 cm', depth: '40.0 cm', weight: '0.72 kg' },
+        supplier: { name: 'GlideSurface Co.', model: 'GS-XL90', warranty: '6 months', origin: 'China' }
+      },
+      7: {
+        functions: ['14-inch LCD display panel', 'Multiple input ports', 'Low-power daily operation'],
+        dimensions: { width: '32.6 cm', height: '20.5 cm', depth: '3.7 cm', weight: '1.9 kg' },
+        supplier: { name: 'BrightView Electronics', model: 'BV-LCD14', warranty: '2 years', origin: 'Japan' }
+      }
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getSupplementalDetails(product) {
+      return supplementalDetailsByProductId[product.id] || {
+        functions: ['Reliable daily operation', 'Quality-tested materials', 'Easy setup experience'],
+        dimensions: { width: 'N/A', height: 'N/A', depth: 'N/A', weight: 'N/A' },
+        supplier: { name: 'TechMart Partner Supplier', model: 'N/A', warranty: '1 year', origin: 'N/A' }
+      };
+    }
+
+    function setupQuantityControls(maxStock) {
+      const input = document.getElementById('quantityInput');
+      const decBtn = document.getElementById('decreaseQtyBtn');
+      const incBtn = document.getElementById('increaseQtyBtn');
+
+      input.max = String(Math.max(1, maxStock));
+      input.value = maxStock > 0 ? '1' : '0';
+
+      function clampQuantity(nextValue) {
+        if (!Number.isFinite(nextValue)) {
+          return maxStock > 0 ? 1 : 0;
+        }
+        if (maxStock <= 0) {
+          return 0;
+        }
+        return Math.min(Math.max(Math.trunc(nextValue), 1), maxStock);
+      }
+
+      function updateQuantity(nextValue) {
+        input.value = String(clampQuantity(nextValue));
+      }
+
+      decBtn.onclick = () => {
+        updateQuantity(Number.parseInt(input.value, 10) - 1);
+      };
+
+      incBtn.onclick = () => {
+        updateQuantity(Number.parseInt(input.value, 10) + 1);
+      };
+
+      input.addEventListener('change', () => {
+        updateQuantity(Number.parseInt(input.value, 10));
+      });
+
+      const disableControls = maxStock === 0;
+      input.disabled = disableControls;
+      decBtn.disabled = disableControls;
+      incBtn.disabled = disableControls;
+    }
+
+    async function addSelectedToCart(productId) {
+      const quantityInput = document.getElementById('quantityInput');
+      const selectedQuantity = Number.parseInt(quantityInput.value, 10);
+
+      if (!Number.isInteger(selectedQuantity) || selectedQuantity < 1) {
+        showToast('Please select a valid quantity', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, quantity: selectedQuantity })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          showToast(data.error || 'Failed to add item', 'error');
+          return;
+        }
+
+        showToast('Added to cart!');
+        updateCartCount();
+      } catch (error) {
+        console.error('Error adding selected quantity to cart:', error);
+        showToast('Failed to add item', 'error');
+      }
+    }
+
+    function renderSupplementalSections(product) {
+      const details = getSupplementalDetails(product);
+      const functionsList = document.getElementById('productFunctions');
+      functionsList.innerHTML = details.functions
+        .map(item => `<li>${escapeHtml(item)}</li>`)
+        .join('');
+
+      document.getElementById('dimensionWidth').textContent = details.dimensions.width;
+      document.getElementById('dimensionHeight').textContent = details.dimensions.height;
+      document.getElementById('dimensionDepth').textContent = details.dimensions.depth;
+      document.getElementById('dimensionWeight').textContent = details.dimensions.weight;
+
+      document.getElementById('supplierName').textContent = details.supplier.name;
+      document.getElementById('supplierModel').textContent = details.supplier.model;
+      document.getElementById('supplierWarranty').textContent = details.supplier.warranty;
+      document.getElementById('supplierOrigin').textContent = details.supplier.origin;
+    }
+
+    async function loadRelatedProducts(product) {
+      const relatedSection = document.getElementById('relatedSection');
+      const relatedGrid = document.getElementById('relatedGrid');
+
+      try {
+        const response = await fetch(`/api/products?category=${encodeURIComponent(product.category)}`);
+        if (!response.ok) {
+          relatedSection.classList.add('hidden');
+          return;
+        }
+
+        const relatedProducts = (await response.json())
+          .filter(item => item.id !== product.id)
+          .slice(0, 4);
+
+        if (relatedProducts.length === 0) {
+          relatedSection.classList.add('hidden');
+          return;
+        }
+
+        relatedGrid.innerHTML = relatedProducts.map(item => {
+          const safeName = escapeHtml(item.name);
+          const safeDescription = escapeHtml(item.description || '');
+          const safeImage = encodeURIComponent(String(item.image));
+
+          return `
+            <a href="/product.html?id=${item.id}" class="related-card" aria-label="View ${safeName}">
+              <div class="related-image">
+                <img src="images/${safeImage}" alt="${safeName}" onerror="this.src='images/placeholder.svg'">
+              </div>
+              <div class="related-info">
+                <h3>${safeName}</h3>
+                <p>${safeDescription}</p>
+                <span class="related-price">$${item.price.toFixed(2)}</span>
+              </div>
+            </a>
+          `;
+        }).join('');
+
+        relatedSection.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading related products:', error);
+        relatedSection.classList.add('hidden');
+      }
+    }
+
+    async function loadProductDetail() {
+      const params = new URLSearchParams(window.location.search);
+      const rawId = params.get('id');
+      const productId = Number.parseInt(rawId, 10);
+
+      const detailSection = document.getElementById('productDetail');
+      const notFoundSection = document.getElementById('productNotFound');
+      const extraSection = document.getElementById('productExtra');
+      const relatedSection = document.getElementById('relatedSection');
+
+      if (!Number.isInteger(productId)) {
+        notFoundSection.classList.remove('hidden');
+        detailSection.classList.add('hidden');
+        extraSection.classList.add('hidden');
+        relatedSection.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/products/${productId}`);
+
+        if (!response.ok) {
+          notFoundSection.classList.remove('hidden');
+          detailSection.classList.add('hidden');
+          extraSection.classList.add('hidden');
+          relatedSection.classList.add('hidden');
+          return;
+        }
+
+        const product = await response.json();
+        currentProduct = product;
+        const imageName = encodeURIComponent(String(product.image));
+        const stockText = product.stock < 5 ? `Only ${product.stock} left!` : `${product.stock} in stock`;
+
+        document.title = `${escapeHtml(product.name)} - TechMart`;
+        document.getElementById('productName').textContent = product.name;
+        document.getElementById('productCategory').textContent = product.category;
+        document.getElementById('productDescription').textContent = product.description || '';
+        document.getElementById('productPrice').textContent = `$${product.price.toFixed(2)}`;
+
+        const stockEl = document.getElementById('productStock');
+        stockEl.textContent = stockText;
+        stockEl.className = `product-stock ${product.stock < 5 ? 'low' : ''}`;
+
+        const imageEl = document.getElementById('productImage');
+        imageEl.src = `images/${imageName}`;
+        imageEl.alt = product.name;
+        imageEl.onerror = function () {
+          this.src = 'images/placeholder.svg';
+        };
+
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        setupQuantityControls(product.stock);
+
+        if (product.stock === 0) {
+          addToCartBtn.disabled = true;
+          addToCartBtn.textContent = 'Out of Stock';
+        } else {
+          addToCartBtn.disabled = false;
+          addToCartBtn.textContent = 'Add to Cart';
+          addToCartBtn.onclick = () => addSelectedToCart(product.id);
+        }
+
+        renderSupplementalSections(product);
+        await loadRelatedProducts(product);
+
+        notFoundSection.classList.add('hidden');
+        detailSection.classList.remove('hidden');
+        extraSection.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading product detail:', error);
+        notFoundSection.classList.remove('hidden');
+        detailSection.classList.add('hidden');
+        extraSection.classList.add('hidden');
+        relatedSection.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProductDetail();
+    });
+  </script>
+</body>
+</html>

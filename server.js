@@ -28,12 +28,69 @@ app.use(express.static(FRONTEND_ROOT, {
 
 // In-memory data store
 const products = [
-  { id: 1, name: 'Wireless Headphones', price: 79.99, category: 'electronics', image: 'headphones.svg', stock: 15 },
-  { id: 2, name: 'Mechanical Keyboard', price: 129.99, category: 'electronics', image: 'keyboard.svg', stock: 8 },
-  { id: 3, name: 'USB-C Hub', price: 49.99, category: 'electronics', image: 'hub.svg', stock: 25 },
-  { id: 4, name: 'Monitor Stand', price: 89.99, category: 'accessories', image: 'stand.svg', stock: 12 },
-  { id: 5, name: 'Webcam HD', price: 69.99, category: 'electronics', image: 'webcam.svg', stock: 20 },
-  { id: 6, name: 'Mouse Pad XL', price: 24.99, category: 'accessories', image: 'mousepad.svg', stock: 50 }
+  {
+    id: 1,
+    name: 'Wireless Headphones',
+    price: 79.99,
+    category: 'electronics',
+    image: 'headphones.svg',
+    description: 'Comfort-fit wireless headphones with clear sound and long battery life.',
+    stock: 15
+  },
+  {
+    id: 2,
+    name: 'Mechanical Keyboard',
+    price: 129.99,
+    category: 'electronics',
+    image: 'keyboard.svg',
+    description: 'Tactile mechanical keyboard built for fast typing and daily productivity.',
+    stock: 8
+  },
+  {
+    id: 3,
+    name: 'USB-C Hub',
+    price: 49.99,
+    category: 'electronics',
+    image: 'hub.svg',
+    description: 'Multi-port USB-C hub for charging, data transfer, and display output.',
+    stock: 25
+  },
+  {
+    id: 4,
+    name: 'Monitor Stand',
+    price: 89.99,
+    category: 'accessories',
+    image: 'stand.svg',
+    description: 'Adjustable monitor stand that improves desk ergonomics and organization.',
+    stock: 12
+  },
+  {
+    id: 5,
+    name: 'Webcam HD',
+    price: 69.99,
+    category: 'electronics',
+    image: 'webcam.svg',
+    description: 'HD webcam with crisp video quality for meetings and streaming.',
+    stock: 20
+  },
+  {
+    id: 6,
+    name: 'Mouse Pad XL',
+    price: 24.99,
+    category: 'accessories',
+    image: 'mousepad.svg',
+    description: 'Extra-large mouse pad with smooth glide surface and anti-slip base.',
+    stock: 50
+  },
+  {
+    id: 7,
+    name: '14" LCD Computer Monitor',
+    price: 119.99,
+    category: 'electronics',
+    image: 'monitor14.svg',
+    description: 'Compact 14-inch LCD monitor with sharp display for work and home setups.',
+    stock: 0
+  }
 ];
 
 // Session-based storage (carts and users per session)

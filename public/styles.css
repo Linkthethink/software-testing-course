@@ -225,6 +225,15 @@ header {
   box-shadow: var(--shadow-lg);
 }
 
+.product-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-link:hover {
+  color: var(--primary);
+}
+
 .product-image {
   aspect-ratio: 1;
   background: var(--gray-100);
@@ -234,7 +243,16 @@ header {
   padding: 2rem;
 }
 
+.product-image .product-link {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .product-image img {
+  display: block;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
@@ -256,6 +274,12 @@ header {
   margin-bottom: 0.5rem;
 }
 
+.product-description {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  margin-bottom: 0.75rem;
+}
+
 .product-price {
   font-size: 1.5rem;
   font-weight: bold;
@@ -271,6 +295,194 @@ header {
 
 .product-stock.low {
   color: var(--danger);
+}
+
+/* Product Detail Page */
+.product-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.product-detail {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  gap: 2rem;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+.product-detail-image {
+  background: var(--gray-100);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.product-detail-image img {
+  max-width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+}
+
+.product-detail-info h1 {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.product-detail-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.quantity-control {
+  margin-top: 1rem;
+}
+
+.quantity-control label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.quantity-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-input-wrap input {
+  width: 80px;
+  text-align: center;
+  padding: 0.5rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.quantity-input-wrap input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.quantity-input-wrap .qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.product-extra {
+  margin-top: 2rem;
+}
+
+.detail-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.detail-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+.detail-card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.detail-list {
+  margin-left: 1.2rem;
+  color: var(--gray-600);
+}
+
+.detail-list li {
+  margin-bottom: 0.45rem;
+}
+
+.detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--gray-600);
+}
+
+.related-section {
+  margin-top: 2rem;
+}
+
+.related-section h2 {
+  margin-bottom: 1rem;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.related-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.related-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.related-image {
+  height: 150px;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.related-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.related-info {
+  padding: 0.9rem;
+}
+
+.related-info h3 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.related-info p {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  margin-bottom: 0.6rem;
+}
+
+.related-price {
+  font-weight: 700;
+  color: var(--primary);
 }
 
 /* Auth Pages */
@@ -693,7 +905,8 @@ footer {
   }
   
   .cart-content,
-  .checkout-container {
+  .checkout-container,
+  .product-detail {
     grid-template-columns: 1fr;
   }
   
