@@ -26,6 +26,8 @@ app.use(express.static(FRONTEND_ROOT, {
   index: false
 }));
 
+app.use('/og_image', express.static(path.join(__dirname, 'og_image')));
+
 // In-memory data store
 const products = [
   {
