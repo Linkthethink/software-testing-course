@@ -297,10 +297,21 @@ function setupSubscriptionForm() {
         body: JSON.stringify({ email })
       });
 
-      const result = await response.json();
+      const rawResult = await response.text();
+      let result = {};
+      if (rawResult) {
+        try {
+          result = JSON.parse(rawResult);
+        } catch (parseError) {
+          result = { error: rawResult };
+        }
+      }
 
       if (!response.ok) {
-        const errorMessage = result.error || 'Subscription failed. Please try again.';
+        const fallbackMessage = `Subscription failed (HTTP ${response.status}).`;
+        const errorMessage = typeof result.error === 'string' && result.error.trim()
+          ? result.error
+          : fallbackMessage;
         if (messageBox) {
           messageBox.textContent = errorMessage;
           messageBox.className = 'subscription-message error';

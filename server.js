@@ -532,6 +532,14 @@ app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Return consistent JSON for malformed JSON bodies.
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Malformed JSON request body' });
+  }
+  return next(err);
+});
+
 app.listen(PORT, () => {
   console.log(`TechMart server running on http://localhost:${PORT}`);
 });
