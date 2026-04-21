@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscriptions - TechMart</title>
+  <meta property="og:title" content="Subscriptions - TechMart">
+  <meta property="og:description" content="View subscription records and webhook event status.">
+  <meta property="og:image" content="/og_image/og-english(3).jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/og_image/og-english(3).jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="/" class="logo">🛒 TechMart</a>
+      <div class="nav-links">
+        <a href="/" class="btn btn-outline">Back to Home</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="subscriptions-page">
+    <section class="subscriptions-card">
+      <div class="subscriptions-header">
+        <div>
+          <h1>Subscription List</h1>
+          <p class="subscriptions-subtitle">Track captured emails and latest webhook event state.</p>
+        </div>
+        <div class="subscriptions-actions">
+          <button id="refreshSubscriptionsBtn" class="btn btn-outline" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="subscriptions-toolbar">
+        <label for="subscriptionSearch">Search Email</label>
+        <input id="subscriptionSearch" name="search" type="text" placeholder="Type an email..." autocomplete="off">
+      </div>
+
+      <p id="subscriptionsSummary" class="subscriptions-summary">Loading...</p>
+
+      <div class="subscriptions-table-wrap">
+        <table class="subscriptions-table" aria-label="Subscription table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Source</th>
+              <th>Latest Event</th>
+              <th>Event Time</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="subscriptionsBody">
+            <tr>
+              <td colspan="6">Loading subscriptions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+  <script>
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '-';
+      const date = new Date(isoString);
+      if (Number.isNaN(date.getTime())) return '-';
+      return date.toLocaleString();
+    }
+
+    function formatStatus(status) {
+      const normalized = (status || 'unknown').toLowerCase();
+      if (normalized === 'sent') return 'sent';
+      if (normalized === 'failed') return 'failed';
+      if (normalized === 'pending') return 'pending';
+      return 'unknown';
+    }
+
+    async function loadSubscriptions() {
+      const tbody = document.getElementById('subscriptionsBody');
+      const summary = document.getElementById('subscriptionsSummary');
+      const searchInput = document.getElementById('subscriptionSearch');
+
+      try {
+        const query = new URLSearchParams();
+        const searchValue = searchInput.value.trim();
+        if (searchValue) {
+          query.append('search', searchValue);
+        }
+
+        const url = query.toString() ? `/api/subscriptions?${query}` : '/api/subscriptions';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load subscriptions');
+        }
+
+        const items = Array.isArray(data.items) ? data.items : [];
+        summary.textContent = `${items.length} subscription${items.length === 1 ? '' : 's'} found`;
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">No subscriptions found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+          const status = formatStatus(item.status);
+          const statusClass = `status-pill ${status}`;
+
+          return `
+            <tr>
+              <td>${escapeHtml(item.email || '-')}</td>
+              <td><span class="${statusClass}">${escapeHtml(status)}</span></td>
+              <td>${escapeHtml(item.source || '-')}</td>
+              <td>${escapeHtml(item.lastWebhookEvent || '-')}</td>
+              <td>${escapeHtml(formatDate(item.lastWebhookEventAt))}</td>
+              <td>${escapeHtml(formatDate(item.createdAt))}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading subscriptions:', error);
+        summary.textContent = 'Could not load subscriptions';
+        tbody.innerHTML = '<tr><td colspan="6">Failed to load data.</td></tr>';
+        showToast('Failed to load subscriptions', 'error');
+      }
+    }
+
+    let searchDebounceTimer;
+    document.getElementById('subscriptionSearch').addEventListener('input', () => {
+      window.clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = window.setTimeout(loadSubscriptions, 250);
+    });
+
+    document.getElementById('refreshSubscriptionsBtn').addEventListener('click', loadSubscriptions);
+
+    loadSubscriptions();
+  </script>
+  <script src="https://chat.webetter.co/widget.js" data-tenant="beatrice_b096cb"></script>
+</body>
+</html>

@@ -1,17 +1,29 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_ROOT = path.join(__dirname, 'public');
+const SENDPROMOTION_WEBHOOK_URL = process.env.SENDPROMOTION_WEBHOOK_URL || 'https://www.sendpromotion.email/api/v1/api/webhooks/sendpromotion';
+const SENDPROMOTION_API_KEY = process.env.SENDPROMOTION_API_KEY || '';
+const SENDPROMOTION_API_KEY_HEADER = process.env.SENDPROMOTION_API_KEY_HEADER || 'Authorization';
+const SENDPROMOTION_API_KEY_PREFIX = process.env.SENDPROMOTION_API_KEY_PREFIX || 'Bearer';
+const SENDPROMOTION_SIGNING_SECRET = process.env.SENDPROMOTION_SIGNING_SECRET || '';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString('utf8');
+  }
+}));
 app.use(cookieParser());
 
 app.use((req, res, next) => {
@@ -97,6 +109,7 @@ const products = [
 
 // Session-based storage (carts and users per session)
 const sessions = {};
+const subscriptions = [];
 
 // Middleware to ensure session exists
 function ensureSession(req, res, next) {
@@ -128,6 +141,23 @@ let users = [
 ];
 
 // API Routes
+
+// Get subscription list
+app.get('/api/subscriptions', (req, res) => {
+  const { search = '' } = req.query;
+  const normalizedSearch = String(search).trim().toLowerCase();
+
+  const items = normalizedSearch
+    ? subscriptions.filter(item => item.email.toLowerCase().includes(normalizedSearch))
+    : subscriptions;
+
+  res.json({
+    count: items.length,
+    items: items
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  });
+});
 
 // Get all products
 app.get('/api/products', (req, res) => {
@@ -342,6 +372,131 @@ app.post('/api/checkout', (req, res) => {
   res.json({ message: 'Order placed successfully', order });
 });
 
+// Send subscription payload to SendPromotion API
+app.post('/api/subscribe', async (req, res) => {
+  const { email } = req.body || {};
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailPattern.test(normalizedEmail)) {
+    return res.status(400).json({ error: 'Please provide a valid email address' });
+  }
+
+  const payload = {
+    email: normalizedEmail,
+    source: 'techmart-demo-store',
+    subscribedAt: new Date().toISOString()
+  };
+
+  const subscriptionRecord = {
+    id: Date.now(),
+    email: normalizedEmail,
+    source: 'website-footer-form',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    lastWebhookEvent: null,
+    lastWebhookEventAt: null
+  };
+  subscriptions.push(subscriptionRecord);
+
+  try {
+    const outboundHeaders = {
+      'Content-Type': 'application/json'
+    };
+
+    if (SENDPROMOTION_API_KEY) {
+      const authValue = SENDPROMOTION_API_KEY_PREFIX
+        ? `${SENDPROMOTION_API_KEY_PREFIX} ${SENDPROMOTION_API_KEY}`
+        : SENDPROMOTION_API_KEY;
+      outboundHeaders[SENDPROMOTION_API_KEY_HEADER] = authValue;
+    }
+
+    const upstreamResponse = await fetch(SENDPROMOTION_WEBHOOK_URL, {
+      method: 'POST',
+      headers: outboundHeaders,
+      body: JSON.stringify(payload)
+    });
+
+    if (!upstreamResponse.ok) {
+      const errorBody = await upstreamResponse.text();
+      subscriptionRecord.status = 'failed';
+      subscriptionRecord.lastError = errorBody || `Webhook status ${upstreamResponse.status}`;
+      return res.status(502).json({
+        error: 'Failed to send subscription to webhook',
+        details: errorBody || `Webhook status ${upstreamResponse.status}`
+      });
+    }
+
+    subscriptionRecord.status = 'sent';
+    res.status(200).json({ message: 'Subscription submitted successfully' });
+  } catch (error) {
+    console.error('SendPromotion webhook error:', error);
+    subscriptionRecord.status = 'failed';
+    subscriptionRecord.lastError = error.message;
+    res.status(502).json({ error: 'Unable to reach webhook service' });
+  }
+});
+
+// Receive SendPromotion outbound webhooks
+app.post('/api/webhooks/sendpromotion', (req, res) => {
+  const signatureHeader = req.get('X-SendPromotion-Signature') || '';
+
+  if (SENDPROMOTION_SIGNING_SECRET) {
+    if (!signatureHeader) {
+      return res.status(401).json({ error: 'Missing X-SendPromotion-Signature header' });
+    }
+
+    const payload = req.rawBody || JSON.stringify(req.body || {});
+    const expected = crypto
+      .createHmac('sha256', SENDPROMOTION_SIGNING_SECRET)
+      .update(payload)
+      .digest('hex');
+
+    const normalizedSignature = signatureHeader.startsWith('sha256=')
+      ? signatureHeader.slice('sha256='.length)
+      : signatureHeader;
+
+    if (normalizedSignature.length !== expected.length) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+    const actualBuffer = Buffer.from(normalizedSignature, 'utf8');
+    const valid = crypto.timingSafeEqual(expectedBuffer, actualBuffer);
+
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+  }
+
+  const eventName = req.body && (req.body.event || req.body.type || 'unknown');
+  const eventEmail = req.body && (
+    req.body.email ||
+    (req.body.contact && req.body.contact.email) ||
+    (req.body.data && req.body.data.email)
+  );
+
+  if (eventEmail && typeof eventEmail === 'string') {
+    const normalizedEventEmail = eventEmail.trim().toLowerCase();
+    const matching = subscriptions.find(item => item.email === normalizedEventEmail);
+
+    if (matching) {
+      matching.lastWebhookEvent = eventName;
+      matching.lastWebhookEventAt = new Date().toISOString();
+    }
+  }
+
+  console.log('SendPromotion webhook received:', eventName);
+
+  // Acknowledge quickly so sender retries are avoided.
+  res.status(200).json({ received: true });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -366,6 +521,10 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
   res.sendFile(path.join(FRONTEND_ROOT, 'register.html'));
+});
+
+app.get('/subscriptions', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'subscriptions.html'));
 });
 
 // Fallback for non-API routes (SPA-friendly)

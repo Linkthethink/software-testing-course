@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCartCount();
   updateAuthArea();
   setupEventListeners();
+  setupSubscriptionForm();
 });
 
 // Load products from API
@@ -254,6 +255,78 @@ function setupEventListeners() {
       }
     });
   }
+}
+
+function setupSubscriptionForm() {
+  const form = document.getElementById('subscriptionForm');
+  if (!form) return;
+
+  const emailInput = document.getElementById('subscriptionEmail');
+  const submitButton = document.getElementById('subscriptionBtn');
+  const messageBox = document.getElementById('subscriptionMessage');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!emailInput || !submitButton) {
+      return;
+    }
+
+    const email = emailInput.value.trim();
+    if (!email) {
+      if (messageBox) {
+        messageBox.textContent = 'Please enter your email address.';
+        messageBox.className = 'subscription-message error';
+      }
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sending...';
+    if (messageBox) {
+      messageBox.textContent = '';
+      messageBox.className = 'subscription-message';
+    }
+
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = result.error || 'Subscription failed. Please try again.';
+        if (messageBox) {
+          messageBox.textContent = errorMessage;
+          messageBox.className = 'subscription-message error';
+        }
+        showToast(errorMessage, 'error');
+        return;
+      }
+
+      if (messageBox) {
+        messageBox.textContent = 'Thanks for subscribing. Please check your inbox soon.';
+        messageBox.className = 'subscription-message success';
+      }
+      showToast('Subscription sent successfully');
+      form.reset();
+    } catch (error) {
+      console.error('Subscription error:', error);
+      if (messageBox) {
+        messageBox.textContent = 'Could not send your subscription right now.';
+        messageBox.className = 'subscription-message error';
+      }
+      showToast('Subscription failed', 'error');
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Subscribe';
+    }
+  });
 }
 
 // Make functions globally available

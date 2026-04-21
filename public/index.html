@@ -70,11 +70,29 @@
   </main>
 
   <footer>
+    <div class="subscription-block" aria-label="Newsletter subscription">
+      <h3>Get Weekly Deals</h3>
+      <p>Subscribe for product drops, discounts, and testing-friendly feature updates.</p>
+      <form id="subscriptionForm" class="subscription-form" novalidate>
+        <label for="subscriptionEmail" class="sr-only">Email address</label>
+        <input
+          type="email"
+          id="subscriptionEmail"
+          name="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        >
+        <button type="submit" class="btn btn-primary" id="subscriptionBtn">Subscribe</button>
+      </form>
+      <p id="subscriptionMessage" class="subscription-message" aria-live="polite"></p>
+    </div>
     <div class="footer-sitemap" aria-label="Footer sitemap">
       <h3>Sitemap</h3>
       <p class="footer-links">
         <a href="/">Homepage</a>
         <a href="/cart.html">Cart</a>
+        <a href="/subscriptions.html">Subscriptions</a>
         <a href="/refund-policy.html">Refund Policy</a>
       </p>
     </div>

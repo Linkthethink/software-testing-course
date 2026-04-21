@@ -1,1 +1,4 @@
 *.yaml
+.env
+.env.local
+.env.*.local

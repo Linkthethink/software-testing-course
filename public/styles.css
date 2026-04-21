@@ -867,6 +867,73 @@ header {
   animation: slideIn 0.3s ease;
 }
 
+/* Newsletter Subscription */
+.subscription-block {
+  max-width: 680px;
+  margin: 0 auto 1.5rem;
+}
+
+.subscription-block h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.subscription-block p {
+  color: var(--gray-300);
+  margin-bottom: 0.75rem;
+}
+
+.subscription-form {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.subscription-form input {
+  width: min(360px, 100%);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.subscription-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.subscription-form .btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.subscription-message {
+  min-height: 1.2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  color: var(--gray-300);
+}
+
+.subscription-message.success {
+  color: #86efac;
+}
+
+.subscription-message.error {
+  color: #fca5a5;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -955,6 +1022,124 @@ footer {
   margin-bottom: 0.5rem;
 }
 
+/* Subscriptions Page */
+.subscriptions-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.subscriptions-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.subscriptions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.subscriptions-header h1 {
+  margin-bottom: 0.2rem;
+}
+
+.subscriptions-subtitle {
+  color: var(--gray-600);
+}
+
+.subscriptions-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.subscriptions-toolbar label {
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.subscriptions-toolbar input {
+  width: min(420px, 100%);
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.subscriptions-toolbar input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.subscriptions-summary {
+  margin-bottom: 0.75rem;
+  color: var(--gray-600);
+}
+
+.subscriptions-table-wrap {
+  overflow-x: auto;
+}
+
+.subscriptions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.subscriptions-table th,
+.subscriptions-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.subscriptions-table th {
+  font-size: 0.86rem;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.subscriptions-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.status-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pill.sent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pill.pending {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.status-pill.unknown {
+  background: #e5e7eb;
+  color: #374151;
+}
+
 /* Utilities */
 .hidden {
   display: none !important;
@@ -980,5 +1165,9 @@ footer {
   
   .cart-item {
     flex-wrap: wrap;
+  }
+
+  .subscriptions-header {
+    align-items: flex-start;
   }
 }
