@@ -262,6 +262,11 @@ function setupSubscriptionForm() {
   if (!form) return;
 
   const emailInput = document.getElementById('subscriptionEmail');
+  const firstNameInput = document.getElementById('subscriptionFirstName');
+  const lastNameInput = document.getElementById('subscriptionLastName');
+  const phoneInput = document.getElementById('subscriptionPhone');
+  const statusInput = document.getElementById('subscriptionStatus');
+  const sourceInput = document.getElementById('subscriptionSource');
   const submitButton = document.getElementById('subscriptionBtn');
   const messageBox = document.getElementById('subscriptionMessage');
 
@@ -289,12 +294,21 @@ function setupSubscriptionForm() {
     }
 
     try {
+      const payload = {
+        email,
+        first_name: firstNameInput ? firstNameInput.value.trim() : '',
+        last_name: lastNameInput ? lastNameInput.value.trim() : '',
+        phone: phoneInput ? phoneInput.value.trim() : '',
+        status: statusInput ? statusInput.value : 'subscribed',
+        source: sourceInput && sourceInput.value.trim() ? sourceInput.value.trim() : 'website_form'
+      };
+
       const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify(payload)
       });
 
       const rawResult = await response.text();

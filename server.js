@@ -110,6 +110,7 @@ const products = [
 // Session-based storage (carts and users per session)
 const sessions = {};
 const subscriptions = [];
+const webhookRecords = [];
 
 // Middleware to ensure session exists
 function ensureSession(req, res, next) {
@@ -141,6 +142,29 @@ let users = [
 ];
 
 // API Routes
+
+// Get inbound webhook records
+app.get('/api/webhook-records', (req, res) => {
+  const { search = '', limit = '100' } = req.query;
+  const normalizedSearch = String(search).trim().toLowerCase();
+  const parsedLimit = Math.max(1, Math.min(500, Number.parseInt(limit, 10) || 100));
+
+  const filtered = normalizedSearch
+    ? webhookRecords.filter(item => {
+      return (
+        (item.eventName || '').toLowerCase().includes(normalizedSearch) ||
+        (item.eventEmail || '').toLowerCase().includes(normalizedSearch)
+      );
+    })
+    : webhookRecords;
+
+  const items = filtered
+    .slice()
+    .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime())
+    .slice(0, parsedLimit);
+
+  res.json({ count: items.length, items });
+});
 
 // Get subscription list
 app.get('/api/subscriptions', (req, res) => {
@@ -374,7 +398,14 @@ app.post('/api/checkout', (req, res) => {
 
 // Send subscription payload to SendPromotion API
 app.post('/api/subscribe', async (req, res) => {
-  const { email } = req.body || {};
+  const {
+    email,
+    first_name: firstName,
+    last_name: lastName,
+    phone,
+    status,
+    source
+  } = req.body || {};
 
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email is required' });
@@ -389,8 +420,11 @@ app.post('/api/subscribe', async (req, res) => {
 
   const payload = {
     email: normalizedEmail,
-    source: 'techmart-demo-store',
-    subscribedAt: new Date().toISOString()
+    first_name: typeof firstName === 'string' ? firstName.trim() : '',
+    last_name: typeof lastName === 'string' ? lastName.trim() : '',
+    phone: typeof phone === 'string' ? phone.trim() : '',
+    status: typeof status === 'string' && status.trim() ? status.trim() : 'subscribed',
+    source: typeof source === 'string' && source.trim() ? source.trim() : 'website_form'
   };
 
   const subscriptionRecord = {
@@ -445,9 +479,31 @@ app.post('/api/subscribe', async (req, res) => {
 // Receive SendPromotion outbound webhooks
 app.post('/api/webhooks/sendpromotion', (req, res) => {
   const signatureHeader = req.get('X-SendPromotion-Signature') || '';
+  const eventName = req.body && (req.body.event || req.body.type || 'unknown');
+  const eventEmail = req.body && (
+    req.body.email ||
+    (req.body.contact && req.body.contact.email) ||
+    (req.body.data && req.body.data.email)
+  );
+
+  const record = {
+    id: Date.now(),
+    receivedAt: new Date().toISOString(),
+    eventName: typeof eventName === 'string' ? eventName : 'unknown',
+    eventEmail: typeof eventEmail === 'string' ? eventEmail : null,
+    hasSignature: Boolean(signatureHeader),
+    signatureStatus: SENDPROMOTION_SIGNING_SECRET ? 'pending' : 'not-configured',
+    verificationError: null,
+    accepted: false,
+    payload: req.body || {},
+    rawBody: req.rawBody || ''
+  };
 
   if (SENDPROMOTION_SIGNING_SECRET) {
     if (!signatureHeader) {
+      record.signatureStatus = 'missing';
+      record.verificationError = 'Missing X-SendPromotion-Signature header';
+      webhookRecords.push(record);
       return res.status(401).json({ error: 'Missing X-SendPromotion-Signature header' });
     }
 
@@ -462,6 +518,9 @@ app.post('/api/webhooks/sendpromotion', (req, res) => {
       : signatureHeader;
 
     if (normalizedSignature.length !== expected.length) {
+      record.signatureStatus = 'invalid';
+      record.verificationError = 'Signature length mismatch';
+      webhookRecords.push(record);
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
@@ -470,16 +529,14 @@ app.post('/api/webhooks/sendpromotion', (req, res) => {
     const valid = crypto.timingSafeEqual(expectedBuffer, actualBuffer);
 
     if (!valid) {
+      record.signatureStatus = 'invalid';
+      record.verificationError = 'Signature verification failed';
+      webhookRecords.push(record);
       return res.status(401).json({ error: 'Invalid signature' });
     }
-  }
 
-  const eventName = req.body && (req.body.event || req.body.type || 'unknown');
-  const eventEmail = req.body && (
-    req.body.email ||
-    (req.body.contact && req.body.contact.email) ||
-    (req.body.data && req.body.data.email)
-  );
+    record.signatureStatus = 'valid';
+  }
 
   if (eventEmail && typeof eventEmail === 'string') {
     const normalizedEventEmail = eventEmail.trim().toLowerCase();
@@ -489,6 +546,13 @@ app.post('/api/webhooks/sendpromotion', (req, res) => {
       matching.lastWebhookEvent = eventName;
       matching.lastWebhookEventAt = new Date().toISOString();
     }
+  }
+
+  record.accepted = true;
+  webhookRecords.push(record);
+
+  if (webhookRecords.length > 1000) {
+    webhookRecords.shift();
   }
 
   console.log('SendPromotion webhook received:', eventName);
@@ -525,6 +589,10 @@ app.get('/register', (req, res) => {
 
 app.get('/subscriptions', (req, res) => {
   res.sendFile(path.join(FRONTEND_ROOT, 'subscriptions.html'));
+});
+
+app.get('/webhook-records', (req, res) => {
+  res.sendFile(path.join(FRONTEND_ROOT, 'webhook-records.html'));
 });
 
 // Fallback for non-API routes (SPA-friendly)

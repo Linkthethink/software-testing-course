@@ -890,8 +890,23 @@ header {
   justify-content: center;
 }
 
+.subscription-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
 .subscription-form input {
   width: min(360px, 100%);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.subscription-form select {
+  width: 100%;
   padding: 0.75rem 1rem;
   border: 1px solid var(--gray-300);
   border-radius: 8px;
@@ -901,6 +916,29 @@ header {
 .subscription-form input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.subscription-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.subscription-form-grid .form-group {
+  margin: 0;
+}
+
+.subscription-form-grid .form-group label {
+  color: var(--gray-300);
+}
+
+.subscription-form-grid input,
+.subscription-form-grid select {
+  width: 100%;
+}
+
+.subscription-submit-row {
+  display: flex;
+  align-items: end;
 }
 
 .subscription-form .btn:disabled {
@@ -1045,6 +1083,12 @@ footer {
   flex-wrap: wrap;
 }
 
+.subscriptions-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .subscriptions-header h1 {
   margin-bottom: 0.2rem;
 }
@@ -1138,6 +1182,25 @@ footer {
 .status-pill.unknown {
   background: #e5e7eb;
   color: #374151;
+}
+
+.payload-details summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.payload-details pre {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--gray-100);
+  border-radius: 8px;
+  max-width: 520px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.85rem;
 }
 
 /* Utilities */

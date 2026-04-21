@@ -72,18 +72,68 @@
   <footer>
     <div class="subscription-block" aria-label="Newsletter subscription">
       <h3>Get Weekly Deals</h3>
-      <p>Subscribe for product drops, discounts, and testing-friendly feature updates.</p>
-      <form id="subscriptionForm" class="subscription-form" novalidate>
-        <label for="subscriptionEmail" class="sr-only">Email address</label>
-        <input
-          type="email"
-          id="subscriptionEmail"
-          name="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required
-        >
-        <button type="submit" class="btn btn-primary" id="subscriptionBtn">Subscribe</button>
+      <p>Subscribe with your contact details and receive campaign updates.</p>
+      <form id="subscriptionForm" class="subscription-form subscription-form-grid" novalidate>
+        <div class="form-group">
+          <label for="subscriptionEmail">Email</label>
+          <input
+            type="email"
+            id="subscriptionEmail"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="subscriptionFirstName">First Name</label>
+          <input
+            type="text"
+            id="subscriptionFirstName"
+            name="first_name"
+            placeholder="Alex"
+            autocomplete="given-name"
+          >
+        </div>
+        <div class="form-group">
+          <label for="subscriptionLastName">Last Name</label>
+          <input
+            type="text"
+            id="subscriptionLastName"
+            name="last_name"
+            placeholder="Chan"
+            autocomplete="family-name"
+          >
+        </div>
+        <div class="form-group">
+          <label for="subscriptionPhone">Phone</label>
+          <input
+            type="tel"
+            id="subscriptionPhone"
+            name="phone"
+            placeholder="+852 1234 5678"
+            autocomplete="tel"
+          >
+        </div>
+        <div class="form-group">
+          <label for="subscriptionStatus">Status</label>
+          <select id="subscriptionStatus" name="status">
+            <option value="subscribed" selected>Subscribed</option>
+            <option value="unsubscribed">Unsubscribed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="subscriptionSource">Source</label>
+          <input
+            type="text"
+            id="subscriptionSource"
+            name="source"
+            value="website_form"
+          >
+        </div>
+        <div class="subscription-submit-row">
+          <button type="submit" class="btn btn-primary" id="subscriptionBtn">Subscribe</button>
+        </div>
       </form>
       <p id="subscriptionMessage" class="subscription-message" aria-live="polite"></p>
     </div>
@@ -93,6 +143,7 @@
         <a href="/">Homepage</a>
         <a href="/cart.html">Cart</a>
         <a href="/subscriptions.html">Subscriptions</a>
+        <a href="/webhook-records.html">Webhook Records</a>
         <a href="/refund-policy.html">Refund Policy</a>
       </p>
     </div>

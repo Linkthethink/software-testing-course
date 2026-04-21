@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webhook Records - TechMart</title>
+  <meta property="og:title" content="Webhook Records - TechMart">
+  <meta property="og:description" content="Inspect inbound SendPromotion webhook requests and verification status.">
+  <meta property="og:image" content="/og_image/og-english(3).jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/og_image/og-english(3).jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="/" class="logo">🛒 TechMart</a>
+      <div class="nav-links">
+        <a href="/subscriptions.html" class="btn btn-outline">Subscription List</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="subscriptions-page">
+    <section class="subscriptions-card">
+      <div class="subscriptions-header">
+        <div>
+          <h1>Webhook Request Records</h1>
+          <p class="subscriptions-subtitle">Every inbound POST to the webhook receiver is captured here.</p>
+        </div>
+        <div class="subscriptions-actions">
+          <button id="refreshRecordsBtn" class="btn btn-outline" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="subscriptions-toolbar">
+        <label for="recordSearch">Search by event or email</label>
+        <input id="recordSearch" name="search" type="text" placeholder="contact.created, alice@example.com" autocomplete="off">
+      </div>
+
+      <p id="recordsSummary" class="subscriptions-summary">Loading...</p>
+
+      <div class="subscriptions-table-wrap">
+        <table class="subscriptions-table" aria-label="Webhook records table">
+          <thead>
+            <tr>
+              <th>Received</th>
+              <th>Event</th>
+              <th>Email</th>
+              <th>Signature</th>
+              <th>Accepted</th>
+              <th>Payload</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+            <tr><td colspan="6">Loading records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+  <script>
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '-';
+      const date = new Date(isoString);
+      if (Number.isNaN(date.getTime())) return '-';
+      return date.toLocaleString();
+    }
+
+    function statusClass(value) {
+      if (value === 'valid') return 'status-pill sent';
+      if (value === 'invalid' || value === 'missing') return 'status-pill failed';
+      if (value === 'pending') return 'status-pill pending';
+      return 'status-pill unknown';
+    }
+
+    function acceptedClass(value) {
+      return value ? 'status-pill sent' : 'status-pill failed';
+    }
+
+    async function loadRecords() {
+      const tbody = document.getElementById('recordsBody');
+      const summary = document.getElementById('recordsSummary');
+      const searchInput = document.getElementById('recordSearch');
+
+      try {
+        const query = new URLSearchParams();
+        const searchValue = searchInput.value.trim();
+        if (searchValue) {
+          query.append('search', searchValue);
+        }
+
+        const url = query.toString() ? `/api/webhook-records?${query}` : '/api/webhook-records';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load webhook records');
+        }
+
+        const items = Array.isArray(data.items) ? data.items : [];
+        summary.textContent = `${items.length} record${items.length === 1 ? '' : 's'} loaded`;
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">No webhook records yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map((item) => {
+          const payloadText = JSON.stringify(item.payload || {}, null, 2);
+          const signatureText = item.signatureStatus || 'unknown';
+          const acceptedText = item.accepted ? 'yes' : 'no';
+
+          return `
+            <tr>
+              <td>${escapeHtml(formatDate(item.receivedAt))}</td>
+              <td>${escapeHtml(item.eventName || '-')}</td>
+              <td>${escapeHtml(item.eventEmail || '-')}</td>
+              <td><span class="${statusClass(signatureText)}">${escapeHtml(signatureText)}</span></td>
+              <td><span class="${acceptedClass(Boolean(item.accepted))}">${escapeHtml(acceptedText)}</span></td>
+              <td>
+                <details class="payload-details">
+                  <summary>View</summary>
+                  <pre>${escapeHtml(payloadText)}</pre>
+                </details>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading records:', error);
+        summary.textContent = 'Could not load records';
+        tbody.innerHTML = '<tr><td colspan="6">Failed to load data.</td></tr>';
+        showToast('Failed to load webhook records', 'error');
+      }
+    }
+
+    let debounceTimer;
+    document.getElementById('recordSearch').addEventListener('input', () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(loadRecords, 250);
+    });
+
+    document.getElementById('refreshRecordsBtn').addEventListener('click', loadRecords);
+
+    loadRecords();
+  </script>
+</body>
+</html>
